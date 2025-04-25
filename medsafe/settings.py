@@ -13,9 +13,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 import environ
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 # 1) django-environ 초기화
 env = environ.Env(DEBUG=(bool, False))
@@ -42,7 +44,39 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'prescriptions',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 세션 기반 인증
+        'rest_framework.authentication.SessionAuthentication',
+        # 필요하다면 Basic Auth도 함께
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        # 로그인이 필요한 API만 허용
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+# Celery 브로커 및 결과 백엔드
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# 직렬화/역직렬화 포맷
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# 타임존 설정
+CELERY_TIMEZONE = 'Asia/Seoul'
+CELERY_ENABLE_UTC = True
+
+# (선택) 태스크 결과 보관 만료 시간 (초)
+CELERY_RESULT_EXPIRES = 3600
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
