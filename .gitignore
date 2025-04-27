@@ -9,3 +9,7 @@ db.sqlite3
 media/
 .vscode/
 medsafe/my-vision-key.json
+dump.rdb
+test_data/
+ocr_test.py
+prescriptions/images/
