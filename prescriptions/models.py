@@ -55,6 +55,19 @@ class Medication(models.Model):
         max_length=50,
         help_text='1회 투여량 (예: "1정", "5ml")'
     )
+    # --- e약은요 API에서 가져올 추가 정보들 ---
+    manufacturer       = models.CharField( max_length=255, blank=True, null=True, help_text="entpName(업체명)" )
+    efficacy           = models.TextField(    blank=True, null=True, help_text="efcyQesitm(효능)" )
+    usage              = models.TextField(    blank=True, null=True, help_text="useMethodQesitm(사용법)" )
+    warning            = models.TextField(    blank=True, null=True, help_text="atpnWarnQesitm(주의사항 경고)" )
+    precautions        = models.TextField(    blank=True, null=True, help_text="atpnQesitm(주의사항)" )
+    interaction        = models.TextField(    blank=True, null=True, help_text="intrcQesitm(상호작용)" )
+    side_effects       = models.TextField(    blank=True, null=True, help_text="seQesitm(부작용)" )
+    storage            = models.TextField(    blank=True, null=True, help_text="depositMethodQesitm(보관법)" )
+    image_url          = models.URLField(     max_length=500, blank=True, null=True, help_text="itemImage(낱알이미지 URL)" )
+
+    created_at         = models.DateTimeField(auto_now_add=True)
+    updated_at         = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.name} - {self.frequency_per_day}회/일"

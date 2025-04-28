@@ -7,10 +7,21 @@ class MedicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medication
         fields = [
-            'id',
-            'name',
-            'frequency_per_day',
-            'dosage',
+            "id",
+            "name",
+            "dosage",
+            "frequency_per_day",
+            "entp_name",
+            "efcy_qesitm",
+            "use_method_qesitm",
+            "atpn_warn_qesitm",
+            "atpn_qesitm",
+            "intrc_qesitm",
+            "se_qesitm",
+            "deposit_method_qesitm",
+            "item_image",
+            "created_at",
+            "updated_at",
         ]
 
 

@@ -13,3 +13,4 @@ dump.rdb
 test_data/
 ocr_test.py
 prescriptions/images/
+test.py
