@@ -14,3 +14,4 @@ test_data/
 ocr_test.py
 prescriptions/images/
 test.py
+medsafe/my-firebase-key.json

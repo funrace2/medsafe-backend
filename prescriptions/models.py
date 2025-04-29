@@ -71,3 +71,7 @@ class Medication(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.frequency_per_day}회/일"
+
+class Allergy(models.Model):
+    user       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    substance  = models.CharField(max_length=100)   # ex. “페니실린”

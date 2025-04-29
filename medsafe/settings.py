@@ -30,6 +30,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = 'django-insecure-svn^vosbm8al_g8_*+5zk8u*iw99xk7m*g*v7igv5o12n&j2km'
 OPEN_API_KEY = env('OPEN_API_KEY')
 GEN_API_KEY = env('GEMINI_API_KEY')
+FIREBASE_CREDENTIALS_PATH = os.environ.get("FIREBASE_CREDENTIALS_PATH")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

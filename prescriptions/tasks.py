@@ -9,6 +9,7 @@ from google import genai
 import requests
 from .models import Prescription, Medication
 from django.conf import settings
+from core.firebase import send_push
 import logging
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,8 @@ logger = logging.getLogger(__name__)
 genai.Client(api_key=settings.GEN_API_KEY)
 # .env에서 불러온 원본 키
 raw_key = settings.OPEN_API_KEY
-# URL 인코딩
-encoded_key = unquote(raw_key)
+# URL 디코딩
+decoded_key = unquote(raw_key)
 
 @shared_task
 def process_prescription(prescription_id):
@@ -82,7 +83,7 @@ def process_prescription(prescription_id):
         resp = requests.get(
             "http://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList",
             params={
-                "ServiceKey": encoded_key,  # URL 인코딩된 키
+                "ServiceKey": decoded_key,  # URL 디코딩된 키
                 "itemName": name,       # 처방전에서 추출한 약 이름
                 "type": "json",
                 "numOfRows": 20,
@@ -146,3 +147,33 @@ def process_prescription(prescription_id):
             storage          = details.get("depositMethodQesitm", ""),
             image_url        = details.get("itemImage", ""),
         )
+    
+    # # 5) 푸시 알림 보내기
+    # #   - user_token: UserProfile 모델에서 꺼낸 FCM 토큰
+    # user_token = pres.user.profile.fcm_token  
+    # title = "처방전 처리 완료"
+    # body  = f"{pres.user.username}님, 처방전의 약 정보가 모두 등록되었습니다."
+    # data  = {"prescription_id": str(prescription_id)}
+    # send_push(user_token, title, body, data)
+
+    # def notify_medication_time(user_id: int, med_name: str):
+    #     # 1) 유저, 토큰 조회
+    #     user = User.objects.get(id=user_id)
+    #     token = user.fcm_token
+    #     if not token:
+    #         return
+
+    #     # 2) 제목·본문·데이터 생성
+    #     title = "💊 복약 알림"
+    #     body = f"{med_name} 복용 시간입니다."
+    #     data_payload = {
+    #         "type": "med_reminder",
+    #         "med_id": str(med_id),
+    #     }
+
+    #     # 3) 푸시 전송
+    #     try:
+    #         msg_id = send_push(token, title, body, data_payload)
+    #         logger.info(f"Sent FCM push: {msg_id}")
+    #     except Exception as e:
+    #         logger.error("FCM push failed: %s", e)
