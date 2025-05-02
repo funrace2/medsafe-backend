@@ -17,25 +17,13 @@ class Prescription(models.Model):
         blank=True,
         help_text='OCR로 읽어온 원문 텍스트'
     )
-    pharmacy_name = models.CharField(
-        max_length=100,
-        help_text='약국 이름'
-    )
-    pharmacy_phone = models.CharField(
-        max_length=20,
-        help_text='약국 전화번호'
-    )
-    hospital_name = models.CharField(
-        max_length=100,
-        help_text='병원 이름'
-    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         help_text='처방전 등록 일시'
     )
 
     def __str__(self):
-        return f"{self.pharmacy_name} 처방전 ({self.created_at:%Y-%m-%d})"
+        return f"처방전 ({self.created_at:%Y-%m-%d})"
 
 
 class Medication(models.Model):
@@ -54,6 +42,24 @@ class Medication(models.Model):
     dosage = models.CharField(
         max_length=50,
         help_text='1회 투여량 (예: "1정", "5ml")'
+    )
+    pharmacy_name = models.CharField(
+        "약국명",
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    pharmacy_phone = models.CharField(
+        "약국 전화번호",
+        max_length=20,
+        blank=True,
+        null=True
+    )
+    hospital_name = models.CharField(
+        "병원 이름",
+        max_length=100,
+        blank=True,
+        null=True
     )
     # --- e약은요 API에서 가져올 추가 정보들 ---
     manufacturer       = models.CharField( max_length=255, blank=True, null=True, help_text="entpName(업체명)" )

@@ -24,4 +24,6 @@ urlpatterns = [
     path('api/prescriptions/', include('prescriptions.urls')),
     # DRF 세션 로그인/로그아웃 뷰
     path('api-auth/', include('rest_framework.urls')),
+    # core 앱 profile API
+    path("api/", include("core.urls")),
 ]

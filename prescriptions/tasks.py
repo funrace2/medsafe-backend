@@ -9,7 +9,7 @@ from google import genai
 import requests
 from .models import Prescription, Medication
 from django.conf import settings
-from core.firebase import send_push
+# from core.firebase import send_push
 import logging
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def process_prescription(prescription_id):
 
     # 3) Gemini에게 파싱 요청
     prompt = f"""
-    아래 처방전 텍스트에서 약 이름(name), 1회 투여량(dosage), 1일 투여횟수(frequency)를
+    아래 처방전 또는 약봉투 텍스트에서 약 이름(name), 1회 투여량(dosage), 1일 투여횟수(frequency), 약국 이름(pharmacy_name), 약국 전화번호(pharmacy_phone), 병원 이름(hospital_name)을
     JSON 리스트 형태로 추출해 주세요. 이때 약 이름은 약학정보원에서 제공하는 약품명과 일치해야 합니다.
     약 이름에 투여량, 투여횟수가 포함되면 안됩니다. 예를 들어 한올트리메부틴말레산염/1정이 아니라 한올트리메부틴말레산염만 포함되어야 합니다.
 
@@ -44,8 +44,8 @@ def process_prescription(prescription_id):
 
     <<출력 예시>>
     [
-        {{"name":"타이레놀","dosage":"1정","frequency":3}},
-        {{"name":"판콜에프","dosage":"10ml","frequency":2}}
+        {{"name":"타이레놀","dosage":"1정","frequency":3,"pharmacy_name":"가나다약국","pharmacy_phone":"02-123-4567","hospital_name":"서울중앙병원"}},
+        {{"name":"판콜에프","dosage":"10ml","frequency":2,"pharmacy_name":"라마바약국","pharmacy_phone":"032-987-7654","hospital_name":"인천중앙병원"}}
     ]
     """
     client = genai.Client(api_key=settings.GEN_API_KEY)
@@ -136,6 +136,9 @@ def process_prescription(prescription_id):
             prescription=pres,
             name=name,
             dosage=dosage,
+            pharmacy_name=item.get("pharmacy_name", ""),
+            pharmacy_phone=item.get("pharmacy_phone", ""),
+            hospital_name=item.get("hospital_name", ""),
             frequency_per_day=freq,
             manufacturer     = details.get("entpName", ""),
             efficacy         = details.get("efcyQesitm", ""),

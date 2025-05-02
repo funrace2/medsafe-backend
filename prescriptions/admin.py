@@ -8,12 +8,10 @@ class PrescriptionAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'user',
-        'pharmacy_name',
-        'hospital_name',
         'created_at',
     )
-    list_filter = ('pharmacy_name', 'hospital_name', 'created_at')
-    search_fields = ('pharmacy_name', 'hospital_name', 'ocr_text')
+    list_filter = ('created_at',)
+    search_fields = ('ocr_text',)
 
 @admin.register(Medication)
 class MedicationAdmin(admin.ModelAdmin):
@@ -23,6 +21,9 @@ class MedicationAdmin(admin.ModelAdmin):
         'name',
         'frequency_per_day',
         'dosage',
+        'pharmacy_name',
+        'hospital_name',
+        'pharmacy_phone',
     )
-    list_filter = ('frequency_per_day',)
-    search_fields = ('name',)
+    list_filter = ('frequency_per_day', 'pharmacy_name', 'hospital_name',)
+    search_fields = ('name', 'pharmacy_name', 'hospital_name',)
