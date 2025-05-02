@@ -15,6 +15,7 @@ class Profile(models.Model):
     birth_date  = models.DateField("생년월일")
     gender      = models.CharField("성별", max_length=1, choices=GENDER_CHOICES)
     allergies   = models.JSONField("알레르기 정보", blank=True, default=list)
+    chronic_diseases = models.JSONField("만성 질환", blank=True, default=list)
 
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
