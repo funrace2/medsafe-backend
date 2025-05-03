@@ -24,6 +24,7 @@ class MedicationAdmin(admin.ModelAdmin):
         'pharmacy_name',
         'hospital_name',
         'pharmacy_phone',
+        'categories',
     )
     list_filter = ('frequency_per_day', 'pharmacy_name', 'hospital_name',)
     search_fields = ('name', 'pharmacy_name', 'hospital_name',)

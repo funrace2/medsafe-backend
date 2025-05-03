@@ -13,8 +13,6 @@ from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
 
-# 1) Gemini API 키 설정 (환경변수 또는 .env에 GEN_API_KEY)
-genai.Client(api_key=settings.GEN_API_KEY)
 # .env에서 불러온 원본 키
 raw_key = settings.OPEN_API_KEY
 # URL 디코딩
@@ -24,6 +22,9 @@ decoded_key = unquote(raw_key)
 def process_prescription(prescription_id):
     # 1) Prescription 인스턴스
     pres = Prescription.objects.get(id=prescription_id)
+
+    # 1) Gemini API 키 설정 (환경변수 또는 .env에 GEN_API_KEY)
+    genai.Client(api_key=settings.GEN_API_KEY)
 
     # 2) OCR
     client = vision.ImageAnnotatorClient()
@@ -38,6 +39,7 @@ def process_prescription(prescription_id):
     아래 처방전 또는 약봉투 텍스트에서 약 이름(name), 1회 투여량(dosage), 1일 투여횟수(frequency), 약국 이름(pharmacy_name), 약국 전화번호(pharmacy_phone), 병원 이름(hospital_name)을
     JSON 리스트 형태로 추출해 주세요. 이때 약 이름은 약학정보원에서 제공하는 약품명과 일치해야 합니다.
     약 이름에 투여량, 투여횟수가 포함되면 안됩니다. 예를 들어 한올트리메부틴말레산염/1정이 아니라 한올트리메부틴말레산염만 포함되어야 합니다.
+    약국 이름에는 "약국"이라는 단어가 포함되어야 합니다.
 
     <<처방전>>
     {pres.ocr_text}
@@ -132,7 +134,7 @@ def process_prescription(prescription_id):
             continue
 
         # Medication 모델에 맞춰 저장
-        Medication.objects.create(
+        med = Medication.objects.create(
             prescription=pres,
             name=name,
             dosage=dosage,
@@ -151,32 +153,53 @@ def process_prescription(prescription_id):
             image_url        = details.get("itemImage", ""),
         )
     
-    # # 5) 푸시 알림 보내기
-    # #   - user_token: UserProfile 모델에서 꺼낸 FCM 토큰
-    # user_token = pres.user.profile.fcm_token  
-    # title = "처방전 처리 완료"
-    # body  = f"{pres.user.username}님, 처방전의 약 정보가 모두 등록되었습니다."
-    # data  = {"prescription_id": str(prescription_id)}
-    # send_push(user_token, title, body, data)
+    # 5) 품목분류 API 호출
+    for item in meds_data:
+        name   = item.get("name")
+        try:
+            med = Prescription.objects.get(id=prescription_id) \
+                    .medications \
+                    .get(name=name)
+        except Medication.DoesNotExist:
+            logger.warning("생성된 med 없음: %s", name)
+            continue
 
-    # def notify_medication_time(user_id: int, med_name: str):
-    #     # 1) 유저, 토큰 조회
-    #     user = User.objects.get(id=user_id)
-    #     token = user.fcm_token
-    #     if not token:
-    #         return
+        resp2 = requests.get(
+            "http://apis.data.go.kr/1471000/DrugPrdlstVldPrdInfoService01/getDrugPrdlstVldPrdInfoService01",
+            params={
+                "serviceKey": decoded_key,
+                "ITEM_NAME": name,
+                "type": "json",
+                "numOfRows": 1,
+                "pageNo": 1,
+            }
+        )
+        if resp2.status_code == 200:
+            try:
+                data2 = resp2.json()
+            except ValueError:
+                logger.warning("품목분류 API JSON 파싱 실패: %r", resp2.text)
+                return
 
-    #     # 2) 제목·본문·데이터 생성
-    #     title = "💊 복약 알림"
-    #     body = f"{med_name} 복용 시간입니다."
-    #     data_payload = {
-    #         "type": "med_reminder",
-    #         "med_id": str(med_id),
-    #     }
+            # response 구조는 e약은요와 비슷하게 껍데기 안에 body → items
+            body2 = data2.get("response", {}).get("body", {}) or data2.get("body", {})
+            raw_items2 = body2.get("items", [])
+            # dict 형태일 수도 있으니 리스트로 고정
+            if isinstance(raw_items2, dict) and raw_items2.get("item"):
+                items2 = raw_items2["item"]
+                if isinstance(items2, dict):
+                    items2 = [items2]
+            elif isinstance(raw_items2, list):
+                items2 = raw_items2
+            else:
+                items2 = []
 
-    #     # 3) 푸시 전송
-    #     try:
-    #         msg_id = send_push(token, title, body, data_payload)
-    #         logger.info(f"Sent FCM push: {msg_id}")
-    #     except Exception as e:
-    #         logger.error("FCM push failed: %s", e)
+            if items2:
+                class_str = items2[0].get("CLASS_NO_NAME", "")
+                categories = [c.strip() for c in class_str.split(",") if c.strip()]
+                # ④ 인스턴스에 저장
+                med.categories = categories
+                med.save(update_fields=["categories"])
+                logger.info("품목분류 저장: %s → %r", name, categories)
+        else:
+            logger.warning("품목분류 API 에러: %s %s", resp2.status_code, resp2.text)

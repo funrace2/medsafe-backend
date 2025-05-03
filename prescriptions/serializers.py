@@ -16,6 +16,7 @@ class MedicationSerializer(serializers.ModelSerializer):
             "hospital_name",
             "entp_name",
             "efcy_qesitm",
+            "categories",
             "use_method_qesitm",
             "atpn_warn_qesitm",
             "atpn_qesitm",

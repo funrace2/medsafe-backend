@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 
 class Prescription(models.Model):
     user = models.ForeignKey(
@@ -74,6 +75,8 @@ class Medication(models.Model):
 
     created_at         = models.DateTimeField(auto_now_add=True)
     updated_at         = models.DateTimeField(auto_now=True)
+    # --- 품목분류 API에서 가져올 추가 정보들 ---
+    categories = ArrayField(models.CharField(max_length=100), default=list)
 
     def __str__(self):
         return f"{self.name} - {self.frequency_per_day}회/일"
