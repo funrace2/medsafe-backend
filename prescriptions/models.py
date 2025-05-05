@@ -78,9 +78,15 @@ class Medication(models.Model):
     # --- 품목분류 API에서 가져올 추가 정보들 ---
     categories = ArrayField(models.CharField(max_length=100), default=list)
 
+    interaction_warnings = models.JSONField(
+        blank=True,
+        default=list,
+        help_text="[{new, old, keyword, score, direction}, …] 형태의 충돌 경고 리스트"
+    )
+    allergy_warnings   = models.JSONField("알러지 경고",    blank=True, default=list)
+    condition_warnings = models.JSONField("지병 경고",     blank=True, default=list)
+
+    
     def __str__(self):
         return f"{self.name} - {self.frequency_per_day}회/일"
-
-class Allergy(models.Model):
-    user       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    substance  = models.CharField(max_length=100)   # ex. “페니실린”
+    

@@ -9,7 +9,7 @@ from google import genai
 import requests
 from .models import Prescription, Medication
 from django.conf import settings
-# from core.firebase import send_push
+from rapidfuzz import process as rf_process, fuzz as rf_fuzz
 import logging
 logger = logging.getLogger(__name__)
 
@@ -74,6 +74,8 @@ def process_prescription(prescription_id):
         meds_data = []
 
     logger.info("🔍 Parsed meds_data (%d items): %r", len(meds_data), meds_data)
+
+    new_meds = []
 
     # 4) 공공약 API 호출 및 DB 저장
     for item in meds_data:
@@ -152,6 +154,7 @@ def process_prescription(prescription_id):
             storage          = details.get("depositMethodQesitm", ""),
             image_url        = details.get("itemImage", ""),
         )
+        new_meds.append(med)
     
     # 5) 품목분류 API 호출
     for item in meds_data:
@@ -197,9 +200,74 @@ def process_prescription(prescription_id):
             if items2:
                 class_str = items2[0].get("CLASS_NO_NAME", "")
                 categories = [c.strip() for c in class_str.split(",") if c.strip()]
-                # ④ 인스턴스에 저장
+                # 인스턴스에 저장
                 med.categories = categories
                 med.save(update_fields=["categories"])
                 logger.info("품목분류 저장: %s → %r", name, categories)
         else:
             logger.warning("품목분류 API 에러: %s %s", resp2.status_code, resp2.text)
+
+    # 6) 분류 키워드 기반 상호작용 감지 (유사도 기준)
+    # 현재 처방전에 속하지 않는, 같은 유저의 다른 처방전 약들
+    existing_meds = Medication.objects.filter(
+        prescription__user=pres.user
+    ).exclude(prescription=pres)
+    warnings = []
+    THRESHOLD = 60  # 유사도 컷오프 (0~100)
+
+    for new in new_meds:
+        for old in existing_meds:
+            # 1) old.interaction 텍스트 vs new.categories 키워드
+            for cat in new.categories:
+                score = rf_fuzz.partial_ratio(cat, old.interaction or "")
+                if score >= THRESHOLD:
+                    warnings.append({
+                        "new": new.name,
+                        "old": old.name,
+                        "keyword": cat,
+                        "score": score,
+                        "direction": "new→old"
+                    })
+                    break
+
+            # 2) new.interaction 텍스트 vs old.categories 키워드
+            for cat in old.categories:
+                score = rf_fuzz.partial_ratio(cat, new.interaction or "")
+                if score >= THRESHOLD:
+                    warnings.append({
+                        "new": new.name,
+                        "old": old.name,
+                        "keyword": cat,
+                        "score": score,
+                        "direction": "old→new"
+                    })
+                    break
+
+    # 중복 제거
+    unique = { (w["new"], w["old"], w["keyword"], w["direction"]) : w for w in warnings }
+    med.interaction_warnings = list(unique.values())
+    med.save(update_fields=["interaction_warnings"])
+
+    profile = pres.user.profile
+    THRESHOLD = 70
+
+    # 7) 알러지 및 지병 충돌 검사
+    for med in new_meds:
+        text = med.precautions or ""
+
+        # 1) 알러지 검사
+        a_warns = []
+        for term in profile.allergies:
+            if rf_fuzz.partial_ratio(term, text) >= THRESHOLD:
+                a_warns.append({"term":term})
+        med.allergy_warnings = a_warns
+
+        # 2) 지병 검사
+        d_warns = []
+        for term in profile.chronic_diseases:
+            if rf_fuzz.partial_ratio(term, text) >= THRESHOLD:
+                d_warns.append({"term":term})
+        med.condition_warnings = d_warns
+
+        # 변경된 두 필드만 저장
+        med.save(update_fields=["allergy_warnings","condition_warnings"])
