@@ -35,7 +35,12 @@ FIREBASE_CREDENTIALS_PATH = os.environ.get("FIREBASE_CREDENTIALS_PATH")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    # '192.168.0.12',          # <-- PC에서 ifconfig/ipconfig로 확인한 로컬 IP
+    '.ngrok-free.app',
+]
 
 
 # Application definition
@@ -48,12 +53,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'prescriptions',
     'core.apps.CoreConfig',  # core 앱을 추가
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
         # 세션 기반 인증
         'rest_framework.authentication.SessionAuthentication',
         # 필요하다면 Basic Auth도 함께
@@ -62,6 +69,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         # 로그인이 필요한 API만 허용
         'rest_framework.permissions.IsAuthenticated',
+        # 모든 사용자에게 허용
+        # 'rest_framework.permissions.AllowAny',
     ],
 }
 

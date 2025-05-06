@@ -1,8 +1,8 @@
 # prescriptions/views.py
 
 from rest_framework import viewsets
-from .models import Prescription
-from .serializers import PrescriptionSerializer
+from .models import Prescription, Medication
+from .serializers import PrescriptionSerializer, MedicationSerializer
 from .tasks import process_prescription
 
 class PrescriptionViewSet(viewsets.ModelViewSet):
@@ -13,3 +13,8 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         # user는 Serializer가 자동으로 채워주니, 바로 save()
         prescription = serializer.save()
         process_prescription.delay(prescription.id)
+
+class MedicationViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Medication.objects.all()
+    serializer_class = MedicationSerializer
+    

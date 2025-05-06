@@ -18,8 +18,12 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.authtoken import views as drf_views
+from core.views import RegisterAPI
 
 urlpatterns = [
+    # 토큰 조회 (POST: username, password → token 반환)
+    path('api-token-auth/', drf_views.obtain_auth_token),
     path('admin/', admin.site.urls),
     path('api/prescriptions/', include('prescriptions.urls')),
     # DRF 세션 로그인/로그아웃 뷰
