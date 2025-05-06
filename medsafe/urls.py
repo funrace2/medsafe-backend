@@ -30,4 +30,5 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     # core 앱 profile API
     path("api/", include("core.urls")),
+    path('api/chat/', include('chat.urls')),
 ]

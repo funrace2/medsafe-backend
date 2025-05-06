@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'prescriptions',
     'core.apps.CoreConfig',  # core 앱을 추가
+    'chat'
 ]
 
 REST_FRAMEWORK = {
