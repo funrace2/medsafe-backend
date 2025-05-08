@@ -40,6 +40,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     # '192.168.0.12',          # <-- PC에서 ifconfig/ipconfig로 확인한 로컬 IP
     '.ngrok-free.app',
+    'medsafe-api-521641460022.asia-northeast3.run.app'
 ]
 
 
