@@ -2,17 +2,20 @@
 
 import json
 import difflib
+import re
+import os
 from urllib.parse import unquote
 from celery import shared_task
 from google.cloud import vision
+from google.oauth2 import service_account
 from google import genai
 import requests
 from .models import Prescription, Medication
 from django.conf import settings
 from rapidfuzz import process as rf_process, fuzz as rf_fuzz
+import traceback
 import logging
 logger = logging.getLogger(__name__)
-
 # .env에서 불러온 원본 키
 raw_key = settings.OPEN_API_KEY
 # URL 디코딩
@@ -20,19 +23,31 @@ decoded_key = unquote(raw_key)
 
 @shared_task
 def process_prescription(prescription_id):
-    # 1) Prescription 인스턴스
-    pres = Prescription.objects.get(id=prescription_id)
+    try:
+        logger.warning("✅ Task 시작: prescription_id=%s", prescription_id)
+        # 1) Prescription 인스턴스
+        pres = Prescription.objects.get(id=prescription_id)
+        logger.warning("📦 Prescription 로드됨: %s", pres)
 
-    # 1) Gemini API 키 설정 (환경변수 또는 .env에 GEN_API_KEY)
-    genai.Client(api_key=settings.GEN_API_KEY)
+        # 1) Gemini API 키 설정 (환경변수 또는 .env에 GEN_API_KEY)
+        genai.Client(api_key=settings.GEN_API_KEY)
 
-    # 2) OCR
-    client = vision.ImageAnnotatorClient()
-    with open(pres.image.path, 'rb') as f:
-        image = vision.Image(content=f.read())
-    response = client.text_detection(image=image)
-    pres.ocr_text = response.full_text_annotation.text
-    pres.save(update_fields=['ocr_text'])
+        # 명시적으로 credentials 객체 로드
+        credentials = service_account.Credentials.from_service_account_file(
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+        )
+        # 2) OCR
+        client = vision.ImageAnnotatorClient(credentials=credentials)
+        logger.warning("🌐 이미지 URL: %s", pres.image_url)
+        image = vision.Image()
+        image.source.image_uri = pres.image_url
+        response = client.text_detection(image=image)
+        pres.ocr_text = response.full_text_annotation.text
+        pres.save(update_fields=['ocr_text'])
+        logger.warning("✅ OCR 완료: %s", pres.ocr_text[:100])
+
+    except Exception as e:
+        logger.exception("❌ Task 내부 예외 발생: %s\n%s", e, traceback.format_exc())
 
     # 3) Gemini에게 파싱 요청
     prompt = f"""
@@ -77,20 +92,27 @@ def process_prescription(prescription_id):
 
     new_meds = []
 
+    def normalize_name(raw_name):
+        # 숫자+단위(정, 캡슐, mg, g, ml) 제거
+        cleaned = re.sub(r'[\d\.]+\s*(mg|g|정|ml|캡슐)', '', raw_name, flags=re.IGNORECASE)
+        # 남은 “정” 같은 단어 한 번 더 제거
+        cleaned = re.sub(r'(정|캡슐)$', '', cleaned)
+        return cleaned.strip()
+
     # 4) 공공약 API 호출 및 DB 저장
     for item in meds_data:
         name   = item.get("name")
         dosage = item.get("dosage")
         freq   = item.get("frequency", 0)
-
+        base_name = normalize_name(item.get("name"))
         # e약은요 서비스 호출
         resp = requests.get(
             "http://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList",
             params={
-                "ServiceKey": decoded_key,  # URL 디코딩된 키
-                "itemName": name,       # 처방전에서 추출한 약 이름
+                "serviceKey": decoded_key,  # URL 디코딩된 키
+                "itemName": base_name,       # 처방전에서 추출한 약 이름
                 "type": "json",
-                "numOfRows": 20,
+                "numOfRows": 50,
                 "pageNo": 1,
             }
         )
@@ -115,7 +137,29 @@ def process_prescription(prescription_id):
             data_items = []
 
         if not data_items:
-            logger.warning("공공API에 후보 없음: %s", name)
+            # 공공 API 에 후보가 없더라도 최소한의 정보로 Medication 생성
+            logger.warning("공공API에 후보 없음: %s — 기본 정보로 생성합니다.", name)
+            med = Medication.objects.create(
+                prescription=pres,
+                name=name,
+                dosage=dosage,
+                pharmacy_name=item.get("pharmacy_name", ""),
+                pharmacy_phone=item.get("pharmacy_phone", ""),
+                hospital_name=item.get("hospital_name", ""),
+                frequency_per_day=freq,
+                # 공공 API 필드들은 비워두기
+                manufacturer="",
+                efficacy="",
+                usage="",
+                warning="",
+                precautions="",
+                interaction="",
+                side_effects="",
+                storage="",
+                image_url="",
+            )
+            new_meds.append(med)
+            # 아래 상세 매칭 로직을 건너뛰고 다음 약으로
             continue
 
         # 후보 이름 리스트

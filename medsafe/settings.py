@@ -40,7 +40,11 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     # '192.168.0.12',          # <-- PC에서 ifconfig/ipconfig로 확인한 로컬 IP
     '.ngrok-free.app',
-    'medsafe-api-521641460022.asia-northeast3.run.app'
+    'medsafe-api-devvjccp3q-du.a.run.app',
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://medsafe-api-devvjccp3q-du.a.run.app",  # 반드시 https:// 를 포함한 풀 URL
+    # ...다른 프론트 도메인들
 ]
 
 
@@ -76,14 +80,21 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Celery 브로커 및 결과 백엔드
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# Upstash Redis URL (environment variable)
+CELERY_BROKER_URL       = os.environ["UPSTASH_REDIS_URL"]
+CELERY_RESULT_BACKEND    = None
+# Upstash 는 TLS 연결을 권장하므로, 필요하면 SSL 옵션도 켜 줍니다.
+CELERY_BROKER_USE_SSL    = {
+    'ssl_cert_reqs': False  # 보안 인증서 확인이 필요하면 True 로 조정
+}
+CELERY_TASK_IGNORE_RESULT = True
 
 # 직렬화/역직렬화 포맷
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_ACKS_LATE    = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 # 타임존 설정
 CELERY_TIMEZONE = 'Asia/Seoul'

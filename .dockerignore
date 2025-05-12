@@ -1,0 +1,17 @@
+# .dockerignore
+
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+.env
+db.sqlite3
+media/
+.vscode/
+medsafe/my-vision-key.json
+dump.rdb
+test_data/
+ocr_test.py
+prescriptions/images/
+test.py
+medsafe/my-firebase-key.json

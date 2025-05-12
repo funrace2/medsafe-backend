@@ -25,7 +25,7 @@ urlpatterns = [
     # 토큰 조회 (POST: username, password → token 반환)
     path('api-token-auth/', drf_views.obtain_auth_token),
     path('admin/', admin.site.urls),
-    path('api/prescriptions/', include('prescriptions.urls')),
+    path('api/', include('prescriptions.urls')),
     # DRF 세션 로그인/로그아웃 뷰
     path('api-auth/', include('rest_framework.urls')),
     # core 앱 profile API

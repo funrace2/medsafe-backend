@@ -22,6 +22,7 @@ class Prescription(models.Model):
         auto_now_add=True,
         help_text='처방전 등록 일시'
     )
+    image_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
         return f"처방전 ({self.created_at:%Y-%m-%d})"

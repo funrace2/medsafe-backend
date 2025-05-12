@@ -10,6 +10,9 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 """
 
 import os
+# Cloud Run에서만 /secrets/vision.json 이 존재하므로, 있을 때만 설정
+if os.path.exists("/secrets/vision.json"):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/secrets/vision.json"
 
 from django.core.wsgi import get_wsgi_application
 
