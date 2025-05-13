@@ -55,6 +55,8 @@ def process_prescription(prescription_id):
     JSON 리스트 형태로 추출해 주세요. 이때 약 이름은 약학정보원에서 제공하는 약품명과 일치해야 합니다.
     약 이름에 투여량, 투여횟수가 포함되면 안됩니다. 예를 들어 한올트리메부틴말레산염/1정이 아니라 한올트리메부틴말레산염만 포함되어야 합니다.
     약국 이름에는 "약국"이라는 단어가 포함되어야 합니다.
+    **주의사항**:
+    - "name"이 빠진 약품은 JSON에 포함하지 마세요.
 
     <<처방전>>
     {pres.ocr_text}
@@ -93,6 +95,8 @@ def process_prescription(prescription_id):
     new_meds = []
 
     def normalize_name(raw_name):
+        if not raw_name:
+            return ""
         # 숫자+단위(정, 캡슐, mg, g, ml) 제거
         cleaned = re.sub(r'[\d\.]+\s*(mg|g|정|ml|캡슐)', '', raw_name, flags=re.IGNORECASE)
         # 남은 “정” 같은 단어 한 번 더 제거

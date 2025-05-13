@@ -15,3 +15,5 @@ ocr_test.py
 prescriptions/images/
 test.py
 medsafe/my-firebase-key.json
+*.DS_Store
+static/

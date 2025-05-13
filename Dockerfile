@@ -26,6 +26,7 @@ COPY . .
 # 7. (선택) static 파일 모아서 배포용으로 준비
 #    만약 Django에서 collectstatic 사용 중이라면 활성화
 # RUN python manage.py collectstatic --noinput
+COPY static/ /app/static
 
 
 # 8. 컨테이너가 수신할 포트
