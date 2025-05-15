@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import environ
 from dotenv import load_dotenv
+import urllib.parse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -61,7 +62,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'prescriptions',
     'core.apps.CoreConfig',  # core 앱을 추가
-    'chat'
+    'chat',
+    'channels',
 ]
 
 REST_FRAMEWORK = {
@@ -135,6 +137,20 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'medsafe.wsgi.application'
+ASGI_APPLICATION = 'medsafe.asgi.application'
+
+# URL에서 host, port, password 분리
+redis_url = os.getenv("UPSTASH_REDIS_URL")
+parsed_url = urllib.parse.urlparse(redis_url)
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.getenv("UPSTASH_REDIS_URL")],
+        },
+    },
+}
 
 
 # Database

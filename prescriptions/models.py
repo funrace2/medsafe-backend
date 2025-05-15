@@ -3,6 +3,7 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.auth import get_user_model
 
 class Prescription(models.Model):
     user = models.ForeignKey(
@@ -91,3 +92,18 @@ class Medication(models.Model):
     def __str__(self):
         return f"{self.name} - {self.frequency_per_day}회/일"
     
+User = get_user_model()
+
+class CalendarMemo(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField()
+    content = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date}"

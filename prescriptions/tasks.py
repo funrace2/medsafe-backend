@@ -14,6 +14,9 @@ from .models import Prescription, Medication
 from django.conf import settings
 from rapidfuzz import process as rf_process, fuzz as rf_fuzz
 import traceback
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from .serializers import MedicationSerializer
 import logging
 logger = logging.getLogger(__name__)
 # .env에서 불러온 원본 키
@@ -210,7 +213,8 @@ def process_prescription(prescription_id):
         try:
             med = Prescription.objects.get(id=prescription_id) \
                     .medications \
-                    .get(name=name)
+                    .filter(name=name) \
+                    .first()
         except Medication.DoesNotExist:
             logger.warning("생성된 med 없음: %s", name)
             continue
@@ -319,3 +323,19 @@ def process_prescription(prescription_id):
 
         # 변경된 두 필드만 저장
         med.save(update_fields=["allergy_warnings","condition_warnings"])
+
+    # 8) WebSocket 알림 보내기
+    channel_layer = get_channel_layer()
+    meds_data = MedicationSerializer(new_meds, many=True).data
+
+    async_to_sync(channel_layer.group_send)(
+        f"user_{pres.user.id}",
+        {
+            "type": "prescription.done",
+            "message": "약 정보가 생성되었습니다.",
+            "prescription_id": pres.id,
+            "medications": meds_data,
+        }
+    )
+
+    logger.info("📡 WebSocket 알림 전송 완료: user_%s", pres.user.id)

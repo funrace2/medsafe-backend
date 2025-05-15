@@ -1,8 +1,9 @@
 # prescriptions/views.py
 
-from rest_framework import viewsets
-from .models import Prescription, Medication
-from .serializers import PrescriptionSerializer, MedicationSerializer
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from .models import Prescription, Medication, CalendarMemo
+from .serializers import PrescriptionSerializer, MedicationSerializer, CalendarMemoSerializer
 from .tasks import process_prescription
 from core.utils import upload_image_to_gcs
 import logging
@@ -28,3 +29,29 @@ class MedicationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Medication.objects.all()
     serializer_class = MedicationSerializer
     
+class CalendarMemoViewSet(viewsets.ModelViewSet):
+    serializer_class = CalendarMemoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return CalendarMemo.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        date = request.data.get('date')
+        content = request.data.get('content')
+
+        if not date:
+            return Response({'error': 'date is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        memo, created = CalendarMemo.objects.update_or_create(
+            user=request.user,
+            date=date,
+            defaults={'content': content}
+        )
+
+        serializer = self.get_serializer(memo)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+

@@ -1,3 +1,4 @@
+# medsafe/asgi.py
 """
 ASGI config for medsafe project.
 
@@ -8,9 +9,16 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
 """
 
 import os
-
+from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
+from medsafe.routing import websocket_urlpatterns
+from medsafe.middleware import TokenAuthMiddleware
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'medsafe.settings')
 
-application = get_asgi_application()
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": TokenAuthMiddleware(
+        URLRouter(websocket_urlpatterns)
+    ),
+})

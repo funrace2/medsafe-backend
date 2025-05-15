@@ -1,7 +1,7 @@
 # prescriptions/serializers.py
 
 from rest_framework import serializers
-from .models import Prescription, Medication
+from .models import Prescription, Medication, CalendarMemo
 
 class MedicationSerializer(serializers.ModelSerializer):
 
@@ -61,3 +61,8 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             "medications",
         ]
         read_only_fields = ["id", "ocr_text", "created_at", "medications",]
+
+class CalendarMemoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CalendarMemo
+        fields = ['id', 'date', 'content']
