@@ -18,13 +18,19 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
         logger.warning("🔐 request.user: %s / 인증됨: %s", self.request.user, self.request.user.is_authenticated)
         image_file = self.request.FILES.get("image")
         image_url = upload_image_to_gcs(image_file) if image_file else None
-        prescription = serializer.save(user=self.request.user, image_url=image_url)
-        logger.warning("✅ 처방 생성됨: id=%s", prescription.id)
+        self.prescription = serializer.save(user=self.request.user, image_url=image_url)
+        logger.warning("✅ 처방 생성됨: id=%s", self.prescription.id)
         try:
-            process_prescription.delay(prescription.id)
+            process_prescription.delay(self.prescription.id)
         except Exception:
             logger.exception("❌ Celery task 호출 실패:")
-        logger.warning("✅ Celery 호출됨: %s", prescription.id)
+        logger.warning("✅ Celery 호출됨: %s", self.prescription.id)
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        response.data['image_url'] = getattr(self, 'prescription', None).image_url if hasattr(self, 'prescription') else None
+        return response
+    
 class MedicationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Medication.objects.all()
     serializer_class = MedicationSerializer
