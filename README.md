@@ -85,7 +85,7 @@ This backend is deployed on **Google Cloud Run** with asynchronous background jo
 
 ## 📣 References
 
-- Drug data provided by: [DrbEasyDrugInfoService - Data.go.kr](http://apis.data.go.kr/1471000/DrbEasyDrugInfoService)
+- Drug data provided by: [DrbEasyDrugInfoService - Data.go.kr]([https://www.data.go.kr/iim/api/selectAPIAcountView.do])
 - Authentication and storage are implemented with user privacy and data security in mind.
 
 ---
