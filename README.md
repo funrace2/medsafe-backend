@@ -1,4 +1,4 @@
-# 🩺 MedSafe Backend
+# 💊 MedSafe Backend
 
 **MedSafe** is a backend system designed to support a medication information and adherence management service tailored for young adults. This project was developed as part of the **Google Solution Challenge 2025** and provides automated drug information lookup, prescription tracking, and medication reminder features through a RESTful API.
 
