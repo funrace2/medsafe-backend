@@ -12,6 +12,9 @@ Medication adherence among young adults is often low due to limited health aware
 
 ## ⚙️ Key Features
 
+- **OCR & Semantic AI Integration**  
+  Google Cloud Vision API is used to extract text from prescriptions, and Gemini (Google's LLM) is used to interpret ambiguous medication queries via chatbot.
+
 - **Automatic Drug Information Lookup**  
   When users scan medication names or item codes via OCR, the system queries the Korean public API “e약은요” to automatically fetch detailed data such as efficacy, usage instructions, warnings, interactions, and side effects.
 
@@ -29,7 +32,8 @@ Medication adherence among young adults is often low due to limited health aware
 ## 🛠️ Tech Stack
 
 - **Framework**: Django (with Django REST Framework)  
-- **Database**: PostgreSQL  
+- **Database**: PostgreSQL
+- **AI Services**: Google Cloud Vision API, Gemini (LLM)
 - **Deployment**: Google Cloud Run, Docker  
 - **Others**: Celery, Upstash Redis, Google Cloud Storage, Task Queue
 
@@ -85,6 +89,8 @@ This backend is deployed on **Google Cloud Run** with asynchronous background jo
 
 ## 📣 References
 
+- OCR powered by Google Cloud Vision API
+- Natural language understanding by Gemini LLM
 - Drug data provided by: [DrbEasyDrugInfoService - Data.go.kr](https://www.data.go.kr/data/15075057/openapi.do)
 - Authentication and storage are implemented with user privacy and data security in mind.
 
