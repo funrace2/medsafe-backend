@@ -92,6 +92,7 @@ This backend is deployed on **Google Cloud Run** with asynchronous background jo
 - OCR powered by Google Cloud Vision API
 - Natural language understanding by Gemini LLM
 - Drug data provided by: [DrbEasyDrugInfoService - Data.go.kr](https://www.data.go.kr/data/15075057/openapi.do)
+- Supplementary drug information via [식별정보조회 API](https://www.data.go.kr/data/15057639/openapi.do#/API%20목록/getMdcinGrnIdntfcInfoList02)
 - Authentication and storage are implemented with user privacy and data security in mind.
 
 ---
