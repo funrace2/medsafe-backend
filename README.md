@@ -1,8 +1,8 @@
-# 💊 MedSafe 백엔드  
+# 💊 MedSafe
 [English README →](./README_en.md)
 
-**MedSafe**는 청년층을 위한 **복약 정보 조회 및 복용 관리 서비스**를 지원하는 백엔드 시스템입니다.  
-이 프로젝트는 **Google Solution Challenge 2025**의 일환으로 개발되었으며, RESTful API를 통해  
+**MedSafe**는 청년층을 위한 **복약 정보 조회 및 복용 관리 서비스**를 지원하는 **이약저약** 애플리케이션의 **백엔드** 시스템입니다.  
+이 프로젝트는 **Google Solution Challenge 2025**의 일환으로 개발되었으며, RESTful API를 통해
 **의약품 정보 자동 조회**, **처방전 관리**, **복용 알림 기능**을 제공합니다.
 
 ---
